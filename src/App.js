@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import io from 'socket.io-client';
+
 import './App.css';
 
 class Square extends React.Component {
@@ -16,7 +18,8 @@ class Window extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      gameState : new Array(this.props.height).fill(0).map(() => new Array(this.props.width).fill("."))
+      gameState : new Array(this.props.height).fill(0).map(() => new Array(this.props.width).fill(".")),
+      socket : io("ws://localhost:1337")
     }
   }
 
@@ -26,7 +29,6 @@ class Window extends React.Component{
       const gameState = [ ...state.gameState ];
       var y = Math.floor(Math.random() * this.props.height);
       var x = Math.floor(Math.random() * this.props.width);
-      console.log(x,y)
       while(gameState[y][x] === "#"){
         y = Math.floor(Math.random() * this.props.height);
         x = Math.floor(Math.random() * this.props.width);
@@ -41,124 +43,34 @@ class Window extends React.Component{
     
   }
 
-  setPlayerStart(){
-    this.setState(state => {
-      let starty = Math.floor(this.props.height/2);
-      let startx = Math.floor(this.props.width/2);
-      let direction = Math.floor(Math.random() * 4);
-      const gameState = [ ...state.gameState ];
-      gameState[starty][startx] = "#";
-      return {
-        gameState : gameState,
-        head : [starty,startx],
-        tail : [starty,startx],
-        headDirection : direction,
-        tailDirections : [direction]
-      };
-    });    
-  };
 
   componentDidMount() {
-    this.setPlayerStart();
-    this.placeFood();
+    this.state.socket.on('gamestate', (data) => {
+	this.setState(state => {
+	   return {
+	   	gameState : data
+	   }
+	});
+
+    });
+    
     window.addEventListener('keydown', (event) =>{
-      /*
-        0: down
-        1: up
-        2: left
-        3: right
-      */
-      this.setState((state) => {
-        var headDirection = state.headDirection;
-        var tailDirections = [ ...state.tailDirections ];
-        
-        if(event.key === "ArrowDown" && headDirection !== 1){
-          headDirection = 0;
-        }else if(event.key === "ArrowUp" && headDirection !== 0){
-          headDirection = 1;
-        }else if(event.key === "ArrowLeft" && headDirection !== 3){
-          headDirection = 2;
-        }else if(event.key === "ArrowRight" && headDirection !== 2){
-          headDirection = 3;
-        }
+      console.log(event.key);
 
-        if(headDirection !== state.headDirection){
-          tailDirections.pop();
-          tailDirections.push(headDirection);
-        }
-
-        return {
-          headDirection : headDirection,
-          tailDirections : tailDirections
-        }
-      });
+      if(event.key === "ArrowDown"){
+        this.state.socket.emit('move', 'down');
+      } else if (event.key === "ArrowUp") {
+        this.state.socket.emit('move', 'up');
+      } else if (event.key === "ArrowLeft") {
+        this.state.socket.emit('move', 'left');
+      } else if (event.key === "ArrowRight") {
+        this.state.socket.emit('move', 'right');
+      } else if (event.key === "Escape") {
+      	this.state.socket.emit('reset');
+      } 
+	    
     });
-    this.timerID = setInterval(
-        () => this.move(),
-        200
-      );
-    }
-  
-  move() {
-    this.setState(state => {
 
-      console.log(state);
-
-      const gameState = [ ...state.gameState ];
-      const headDirection = state.headDirection;
-      let head = [ ...state.head ];
-      let tail = [ ...state.tail ];
-      let tailDirections = [ ...state.tailDirections ];
-      
-      tailDirections.push(headDirection);
-
-      /*
-        0: down
-        1: up
-        2: left
-        3: right
-      */
-      if(headDirection === 0 && (head[0] + 1 < this.props.height) && (gameState[head[0] + 1][head[1]] !== "#") && (gameState[head[0] + 1][head[1]] !== "X")){
-        head = [++head[0], head[1]];
-      }else if (headDirection === 1 && (head[0] - 1 >= 0) && (gameState[head[0] - 1][head[1]] !== "#") && (gameState[head[0] - 1][head[1]] !== "X")){
-        head = [--head[0], head[1]];
-      }else if (headDirection === 2 && (head[1] - 1 >= 0) && (gameState[head[0]][head[1] - 1] !== "#") && (gameState[head[0]][head[1] - 1] !== "X")){
-        head = [head[0], --head[1]];
-      }else if (headDirection === 3 && (head[1] + 1 < this.props.width) && (gameState[head[0]][head[1] + 1 ] !== "#") && (gameState[head[0]][head[1] + 1] !== "X")){
-        head = [head[0], ++head[1]];
-      }else{
-        return{
-          gameState : new Array(this.props.height).fill(0).map(() => new Array(this.props.width).fill("X"))
-        };
-      }
-
-      //TODO: Add conditional logic to determine if snake grows
-      if(gameState[head[0]][head[1]] !== "*"){
-        let tailDirection = tailDirections.shift();
-        gameState[tail[0]][tail[1]] = ".";
-        if(tailDirection === 0 && (tail[0] + 1 < this.props.height)){
-          tail = [++tail[0], tail[1]];
-        }else if (tailDirection === 1 && (tail[0] - 1 >= 0)){
-          tail = [--tail[0], tail[1]];
-        }else if (tailDirection === 2 && (tail[1] - 1 >= 0)){
-          tail = [tail[0], --tail[1]];
-        }else if (tailDirection === 3 && (tail[1] + 1 < this.props.width)){
-          tail = [tail[0], ++tail[1]];
-        }
-      }else{
-        this.placeFood();
-      }
-
-      gameState[head[0]][head[1]] = "#";      
-
-      return {
-        gameState : gameState,
-        head: head,
-        tail: tail,
-        headDirection : headDirection,
-        tailDirections : tailDirections
-      }
-    });
   }
   
   render() {
