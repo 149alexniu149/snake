@@ -3,10 +3,15 @@ import io from 'socket.io-client';
 
 import './App.css';
 
+
+
 class Square extends React.Component {
   render(){
+    var squareStlye = {
+      color: this.props.color
+    };
     return (
-      <div className="square">
+      <div className="square" style={squareStlye}>
         {this.props.value}
       </div>
     );
@@ -15,22 +20,32 @@ class Square extends React.Component {
 
 class Window extends React.Component{
   
+
   constructor(props){
     super(props);
     this.state = {
       gameState : new Array(this.props.height).fill(0).map(() => new Array(this.props.width).fill(".")),
-      socket : io("ws://localhost:1337")
+      socket : io("ws://localhost:1337"),
+      colorMap : {}
     }
+
   }
 
   componentDidMount() {
     this.state.socket.on('gamestate', (data) => {
-	this.setState(state => {
-	   return {
-	   	gameState : data
-	   }
-	});
+	    this.setState(state => {
+	      return {
+	   	    gameState : data
+	      }
+	    });
+    });
 
+    this.state.socket.on('colors', (data) => {
+	    this.setState(state => {
+	      return {
+	   	    colorMap : data
+	      }
+	    });
     });
     
     window.addEventListener('keydown', (event) =>{
@@ -57,7 +72,15 @@ class Window extends React.Component{
       <div>
         {this.state.gameState.map((_, i) => {
             return <div className="board-row">{this.state.gameState[i].map((_, j) => {
-              return <Square value={this.state.gameState[i][j]}/>
+              let squareColor = "black";
+              if (this.state.gameState[i][j] === "@") {
+                squareColor = "red";
+              } else if(this.state.gameState[i][j] === "." && this.state.gameState[i][j] === "X") {
+                squareColor = "black";
+              } else {
+                squareColor = this.state.colorMap[this.state.gameState[i][j]];
+              }
+              return <Square value={this.state.gameState[i][j]} color={squareColor}/>
             })
           }</div>
         })}
