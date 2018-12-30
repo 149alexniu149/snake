@@ -41,7 +41,7 @@ class Window extends React.Component{
     });
 
     this.state.socket.on('colors', (data) => {
-      log.console("Colors Updated");
+      console.log("Colors Updated");
 	    this.setState(state => {
 	      return {
 	   	    colorMap : data
