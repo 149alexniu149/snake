@@ -23,27 +23,6 @@ class Window extends React.Component{
     }
   }
 
-  placeFood(){
-    //TODO: Ensure food cannot be placed on top of the snake
-    this.setState( (state) => {
-      const gameState = [ ...state.gameState ];
-      var y = Math.floor(Math.random() * this.props.height);
-      var x = Math.floor(Math.random() * this.props.width);
-      while(gameState[y][x] === "#"){
-        y = Math.floor(Math.random() * this.props.height);
-        x = Math.floor(Math.random() * this.props.width);
-      }
-
-      gameState[y][x] = "*";
-
-      return{
-        gameState : gameState
-      }
-    });
-    
-  }
-
-
   componentDidMount() {
     this.state.socket.on('gamestate', (data) => {
 	this.setState(state => {
