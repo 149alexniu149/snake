@@ -41,6 +41,7 @@ class Window extends React.Component{
     });
 
     this.state.socket.on('colors', (data) => {
+      log.console("Colors Updated");
 	    this.setState(state => {
 	      return {
 	   	    colorMap : data
@@ -61,6 +62,14 @@ class Window extends React.Component{
         this.state.socket.emit('move', 'right');
       } else if (event.key === "Escape") {
       	this.state.socket.emit('reset');
+      } else if (event.key === "W") {
+        this.state.socket.emit('move', 'up');
+      } else if (event.key === "A") {
+        this.state.socket.emit('move', 'left');
+      } else if (event.key === "D") {
+        this.state.socket.emit('move', 'right');
+      } else if (event.key === "S") {
+      	this.state.socket.emit('move', 'down');
       } 
 	    
     });
