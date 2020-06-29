@@ -25,7 +25,7 @@ class Window extends React.Component{
     super(props);
     this.state = {
       gameState : new Array(this.props.height).fill(0).map(() => new Array(this.props.width).fill(".")),
-      socket : io("ws://localhost:1337"),
+      socket : io("ws://66.44.49.90:1337"),
       colorMap : {}
     }
 
